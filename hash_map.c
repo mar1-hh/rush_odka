@@ -6,7 +6,7 @@
 /*   By: marouane <marouane@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/18 14:27:49 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/04/18 22:59:28 by marouane         ###   ########.fr       */
+/*   Updated: 2025/04/18 23:30:19 by marouane         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -104,10 +104,10 @@ char	*find_map(t_hashmap *map, char *key)
 	index2 = hash_function(key) % map->size;
 	while (index2 < map->size)
 	{
-		if (!strcmp(key, map->arr[index1][index2].key))
-			return (map->arr[index1][index2].value);
 		if (map->arr[index1][index2].sit == 0)
 			return (NULL);
+		if (!strcmp(key, map->arr[index1][index2].key))
+			return (map->arr[index1][index2].value);
 		index2++;
 		if (index2 == map->size)
 			index2 = 0;
@@ -117,30 +117,32 @@ char	*find_map(t_hashmap *map, char *key)
 
 char *get_next_line(int fd);
 
-void parsing_data(t_hashmap *map)
+void	parsing_data(t_hashmap *map)
 {
-	char 	*key;
+	char	*key;
 	char	*value;
 
 	key = get_next_line(0);
-	value = get_next_line(0);
-	size_t	i = 0;
-	while (value)
+	while (key && key[0] != '\n')
 	{
+		value = get_next_line(0);
+		if (!value)
+			break;
 		insert_map(map, key, value);
 		key = get_next_line(0);
-		if (key[0] == '\n')
-			break;
-		value = get_next_line(0);
-		i++;
 	}
 	key = get_next_line(0);
 	while (key)
 	{
-		printf("%s", find_map(map, key));
+		char *result = find_map(map, key);
+		if (result)
+			printf("%s", result);
+		else
+			printf("%s: Not found.\n", key);
 		key = get_next_line(0);
 	}
 }
+
 
 int main()
 {
