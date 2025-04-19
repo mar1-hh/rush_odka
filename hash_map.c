@@ -6,7 +6,7 @@
 /*   By: marouane <marouane@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/18 14:27:49 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/04/18 23:30:19 by marouane         ###   ########.fr       */
+/*   Updated: 2025/04/19 14:50:50 by marouane         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -25,7 +25,9 @@ typedef struct s_node
 typedef struct s_hashmap
 {
 	t_node *arr[4];
-	size_t	size;
+	size_t	size[4];
+	size_t	element_size[4];
+	float	percent[4];	
 } t_hashmap;
 
 size_t Jenkins_one_at_a_time_hash(char *str)
@@ -53,17 +55,60 @@ size_t	hash_function(char *str)
 		hash = ((hash << 5) + hash) + *str;
 		str++;
 	}
-
 	return hash;
 }
 
 void	hashmap_init(t_hashmap *map, size_t size)
 {
-	map->arr[0] = calloc(size , sizeof(t_node));
-	map->arr[1] = calloc(size , sizeof(t_node));
-	map->arr[2] = calloc(size , sizeof(t_node));
-	map->arr[3] = calloc(size , sizeof(t_node));
-	map->size = size;
+	int	i;
+
+	i = 0;
+	while (i < 4)
+	{
+		map->arr[i] = calloc(size , sizeof(t_node));
+		map->element_size[i] = 0;
+		map->percent[i] = 0;
+		map->size[i] = size;
+		i++;
+	}
+}
+
+void	resize_bucket(t_hashmap *map, int index)
+{
+	size_t	new_size;
+	t_node	*new_bucket;
+	char	*key;
+	char	*value;
+	size_t	new_index;
+	size_t	i;
+	
+	new_size = map->size[index] * 2;
+	new_bucket = calloc(sizeof(t_node), new_size);
+	if (!new_bucket)
+		return ;
+	i = 0;
+	while (i < map->size[index])
+	{
+		key = map->arr[index][i].key;
+		value = map->arr[index][i].value;
+		new_index = hash_function(key) % new_size;
+		while (new_bucket[new_index].sit)
+			new_index = (new_index + 1) % new_size;
+		new_bucket[new_index].key = key;
+		new_bucket[new_index].value = value;
+		new_bucket[new_index].sit = 1;
+		i++;
+	}
+	free(map->arr[index]);
+	map->arr[index] = new_bucket;
+	map->size[index] = new_size;
+}
+
+void	check_resize(t_hashmap *map, int index)
+{
+	map->percent[index] = (float)map->element_size[index] / map->size[index];
+	if (map->percent[index] > 0.7)
+		resize_bucket(map, index);
 }
 
 void	insert_map(t_hashmap *map, char *key, char *value)
@@ -72,25 +117,29 @@ void	insert_map(t_hashmap *map, char *key, char *value)
 	size_t	index2;
 
 	index1 = Jenkins_one_at_a_time_hash(key) % 4;
-	index2 = hash_function(key) % map->size;
+	check_resize(map, index1);
+	index2 = hash_function(key) % map->size[index1];
 	if (!map->arr[index1][index2].sit)
 	{
 		map->arr[index1][index2].key = key;
 		map->arr[index1][index2].value = value;
 		map->arr[index1][index2].sit = 1;
+		map->element_size[index1]++;
 		return ;
 	}
-	while (index2 < map->size)
+	while (index2 < map->size[index1])
 	{
 		if (!map->arr[index1][index2].sit || !strcmp(key, map->arr[index1][index2].key))
 		{
+			if (!map->arr[index1][index2].sit)
+				map->element_size[index1]++;
 			map->arr[index1][index2].key = key;
 			map->arr[index1][index2].value = value;
 			map->arr[index1][index2].sit = 1;
 			return ;
 		}
 		index2++;
-		if (index2 == map->size)
+		if (index2 == map->size[index1])
 			index2 = 0;
 	}
 }
@@ -101,15 +150,15 @@ char	*find_map(t_hashmap *map, char *key)
 	size_t	index2;
 
 	index1 = Jenkins_one_at_a_time_hash(key) % 4;
-	index2 = hash_function(key) % map->size;
-	while (index2 < map->size)
+	index2 = hash_function(key) % map->size[index1];
+	while (index2 < map->size[index1])
 	{
 		if (map->arr[index1][index2].sit == 0)
 			return (NULL);
 		if (!strcmp(key, map->arr[index1][index2].key))
 			return (map->arr[index1][index2].value);
 		index2++;
-		if (index2 == map->size)
+		if (index2 == map->size[index1])
 			index2 = 0;
 	}
 	return (NULL);
@@ -147,7 +196,7 @@ void	parsing_data(t_hashmap *map)
 int main()
 {
 	t_hashmap	map;
-	hashmap_init(&map, 25000);
+	hashmap_init(&map, 100000);
 	parsing_data(&map);
 	free(map.arr[0]);
 	free(map.arr[1]);
