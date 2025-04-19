@@ -6,7 +6,7 @@
 /*   By: marouane <marouane@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/18 14:27:49 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/04/19 19:28:04 by marouane         ###   ########.fr       */
+/*   Updated: 2025/04/19 22:37:27 by marouane         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -15,11 +15,13 @@
 #include <string.h>
 #include <stdio.h>
 
+typedef unsigned char bool;
+
 typedef struct s_node
 {
 	char	*key;
 	char	*value;
-	int		sit;
+	bool	sit;
 } t_node;
 
 typedef struct s_hashmap
@@ -58,6 +60,18 @@ size_t	hash_function(char *str)
 	return hash;
 }
 
+void init_sit(t_node *arr, size_t size)
+{
+	size_t	i;
+
+	i = 0;
+	while (i < size)
+	{
+		arr->sit = 0;
+		i++;
+	}
+}
+
 void	hashmap_init(t_hashmap *map, size_t size)
 {
 	int	i;
@@ -65,13 +79,17 @@ void	hashmap_init(t_hashmap *map, size_t size)
 	i = 0;
 	while (i < 4)
 	{
-		map->arr[i] = calloc(size , sizeof(t_node));
+		map->arr[i] = malloc(size * sizeof(t_node));
+		if (!map->arr[i])
+			return ;
+		init_sit(map->arr[i], size);
 		map->element_size[i] = 0;
 		map->percent[i] = 0;
 		map->size[i] = size;
 		i++;
 	}
 }
+
 
 void	resize_bucket(t_hashmap *map, int index)
 {
@@ -83,9 +101,10 @@ void	resize_bucket(t_hashmap *map, int index)
 	size_t	i;
 	
 	new_size = map->size[index] * 2;
-	new_bucket = calloc(sizeof(t_node), new_size);
+	new_bucket = malloc(sizeof(t_node) * new_size);
 	if (!new_bucket)
 		return ;
+	init_sit(new_bucket, new_size);
 	i = 0;
 	while (i < map->size[index])
 	{
@@ -222,7 +241,7 @@ void	parsing_data(t_hashmap *map)
 int main()
 {
 	t_hashmap	map;
-	hashmap_init(&map, 1000000);
+	hashmap_init(&map, 250000);
 	parsing_data(&map);
 	free(map.arr[0]);
 	free(map.arr[1]);
