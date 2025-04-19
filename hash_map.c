@@ -6,7 +6,7 @@
 /*   By: marouane <marouane@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/18 14:27:49 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/04/19 16:06:11 by marouane         ###   ########.fr       */
+/*   Updated: 2025/04/19 19:28:04 by marouane         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -89,14 +89,17 @@ void	resize_bucket(t_hashmap *map, int index)
 	i = 0;
 	while (i < map->size[index])
 	{
-		key = map->arr[index][i].key;
-		value = map->arr[index][i].value;
-		new_index = hash_function(key) % new_size;
-		while (new_bucket[new_index].sit)
-			new_index = (new_index + 1) % new_size;
-		new_bucket[new_index].key = key;
-		new_bucket[new_index].value = value;
-		new_bucket[new_index].sit = 1;
+		if (map->arr[index][i].sit == 1)
+		{
+			key = map->arr[index][i].key;
+			value = map->arr[index][i].value;
+			new_index = hash_function(key) % new_size;
+			while (new_bucket[new_index].sit)
+				new_index = (new_index + 1) % new_size;
+			new_bucket[new_index].key = key;
+			new_bucket[new_index].value = value;
+			new_bucket[new_index].sit = 1;
+		}
 		i++;
 	}
 	free(map->arr[index]);
@@ -130,8 +133,6 @@ void	insert_map(t_hashmap *map, char *key, char *value)
 	}
 	while (index2 < map->size[index1])
 	{
-		// if (counter > 0)
-		// 	printf("colision key = %s\n", key);
 		if (!map->arr[index1][index2].sit || !strcmp(key, map->arr[index1][index2].key))
 		{
 			if (!map->arr[index1][index2].sit)
@@ -142,7 +143,6 @@ void	insert_map(t_hashmap *map, char *key, char *value)
 			return ;
 		}
 		index2++;
-		// counter++;
 		if (index2 == map->size[index1])
 			index2 = 0;
 	}
@@ -168,12 +168,28 @@ char	*find_map(t_hashmap *map, char *key)
 	return (NULL);
 }
 
+void ft_putstr(char *str, int flag)
+{
+	size_t	i;
+	
+	i = 0;
+	while (str[i])
+	{
+		if (str[i] == '\n' && flag)
+			flag = 0;
+		else
+			write(1, &str[i], 1);
+		i++;
+	}
+}
+
 char *get_next_line(int fd);
 
 void	parsing_data(t_hashmap *map)
 {
 	char	*key;
 	char	*value;
+	size_t	insert_count = 0;
 
 	key = get_next_line(0);
 	while (key && key[0] != '\n')
@@ -183,15 +199,21 @@ void	parsing_data(t_hashmap *map)
 			break;
 		insert_map(map, key, value);
 		key = get_next_line(0);
+		insert_count++;
+		if (insert_count % 1000 == 0)
+			printf("%zu...\n", insert_count);
 	}
 	key = get_next_line(0);
 	while (key)
 	{
 		char *result = find_map(map, key);
 		if (result)
-			printf("%s", result);
+			ft_putstr(result, 0);
 		else
-			printf("%s: Not found.\n", key);
+		{
+			ft_putstr(key, 1);
+			ft_putstr(": Not found.\n", 0);
+		}
 		key = get_next_line(0);
 	}
 }
@@ -200,7 +222,7 @@ void	parsing_data(t_hashmap *map)
 int main()
 {
 	t_hashmap	map;
-	hashmap_init(&map, 100000);
+	hashmap_init(&map, 1000000);
 	parsing_data(&map);
 	free(map.arr[0]);
 	free(map.arr[1]);
