@@ -6,7 +6,7 @@
 /*   By: marouane <marouane@student.42.fr>          +#+  +:+       +#+        */
 /*                                                +#+#+#+#+#+   +#+           */
 /*   Created: 2025/04/18 14:27:49 by msaadaou          #+#    #+#             */
-/*   Updated: 2025/04/19 14:50:50 by marouane         ###   ########.fr       */
+/*   Updated: 2025/04/19 16:06:11 by marouane         ###   ########.fr       */
 /*                                                                            */
 /* ************************************************************************** */
 
@@ -119,6 +119,7 @@ void	insert_map(t_hashmap *map, char *key, char *value)
 	index1 = Jenkins_one_at_a_time_hash(key) % 4;
 	check_resize(map, index1);
 	index2 = hash_function(key) % map->size[index1];
+	// int counter = 0;
 	if (!map->arr[index1][index2].sit)
 	{
 		map->arr[index1][index2].key = key;
@@ -129,6 +130,8 @@ void	insert_map(t_hashmap *map, char *key, char *value)
 	}
 	while (index2 < map->size[index1])
 	{
+		// if (counter > 0)
+		// 	printf("colision key = %s\n", key);
 		if (!map->arr[index1][index2].sit || !strcmp(key, map->arr[index1][index2].key))
 		{
 			if (!map->arr[index1][index2].sit)
@@ -139,6 +142,7 @@ void	insert_map(t_hashmap *map, char *key, char *value)
 			return ;
 		}
 		index2++;
+		// counter++;
 		if (index2 == map->size[index1])
 			index2 = 0;
 	}
